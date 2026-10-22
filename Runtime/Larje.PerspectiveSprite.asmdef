@@ -1,0 +1,14 @@
+{
+    "name": "Larje.PerspectiveSprite",
+    "rootNamespace": "Larje.PerspectiveSprite",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
