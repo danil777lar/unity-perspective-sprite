@@ -27,6 +27,7 @@ namespace Larje.PerspectiveSprite
         [ SerializeField ] private Color _color = Color.white;
         [ SerializeField ] private bool _flipX;
         [ SerializeField ] private bool _flipY;
+        [ SerializeField ] private bool _preserveAspect;
 
         [ Header( "Quad" ) ]
         [ SerializeField, Range( MinSubdivisions, MaxSubdivisions ) ] private int _subdivisions = 8;
@@ -106,6 +107,19 @@ namespace Larje.PerspectiveSprite
             set
             {
                 _flipY = value;
+                SetDirty();
+            }
+        }
+
+        public bool PreserveAspect
+        {
+            get
+            {
+                return _preserveAspect;
+            }
+            set
+            {
+                _preserveAspect = value;
                 SetDirty();
             }
         }
@@ -322,6 +336,7 @@ namespace Larje.PerspectiveSprite
             QuadHomography homography = QuadHomography.FromCorners( _bottomLeft, _bottomRight, _topRight, _topLeft, DegenerateEpsilon );
             Rect uvRect = GetSpriteUvRect();
             Color vertexColor = GetVertexColor();
+            Rect fitRect = GetFitRect();
             int lineCount = _subdivisions + 1;
 
             for ( int y = 0; y < lineCount; y++ )
@@ -334,7 +349,7 @@ namespace Larje.PerspectiveSprite
                     float uvU = _flipX ? 1f - u : u;
                     float uvV = _flipY ? 1f - v : v;
 
-                    _vertices.Add( homography.Map( new Vector2( u, v ) ) );
+                    _vertices.Add( homography.Map( new Vector2( Mathf.Lerp( fitRect.xMin, fitRect.xMax, u ), Mathf.Lerp( fitRect.yMin, fitRect.yMax, v ) ) ) );
                     _uvs.Add( new Vector2( Mathf.Lerp( uvRect.xMin, uvRect.xMax, uvU ), Mathf.Lerp( uvRect.yMin, uvRect.yMax, uvV ) ) );
                     _colors.Add( vertexColor );
                     _normals.Add( Vector3.back );
@@ -413,6 +428,33 @@ namespace Larje.PerspectiveSprite
                     _propertyBlock.SetTexture( secondary.name, secondary.texture );
                 }
             }
+        }
+
+        private Rect GetFitRect()
+        {
+            Rect fullRect = new Rect( 0f, 0f, 1f, 1f );
+            if ( !_preserveAspect )
+            {
+                return fullRect;
+            }
+
+            float quadWidth = ( Vector2.Distance( _bottomLeft, _bottomRight ) + Vector2.Distance( _topLeft, _topRight ) ) * 0.5f;
+            float quadHeight = ( Vector2.Distance( _bottomLeft, _topLeft ) + Vector2.Distance( _bottomRight, _topRight ) ) * 0.5f;
+            Vector2 spriteSize = _sprite.textureRect.size;
+
+            if ( quadWidth < DegenerateEpsilon || quadHeight < DegenerateEpsilon || spriteSize.x < DegenerateEpsilon || spriteSize.y < DegenerateEpsilon )
+            {
+                return fullRect;
+            }
+
+            float ratio = ( spriteSize.x / spriteSize.y ) / ( quadWidth / quadHeight );
+            if ( ratio < 1f )
+            {
+                return new Rect( ( 1f - ratio ) * 0.5f, 0f, ratio, 1f );
+            }
+
+            float heightRatio = 1f / ratio;
+            return new Rect( 0f, ( 1f - heightRatio ) * 0.5f, 1f, heightRatio );
         }
 
         private Color GetVertexColor()

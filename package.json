@@ -1,6 +1,6 @@
 {
   "name": "com.larje.perspectivesprite",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "displayName": "Perspective Sprite",
   "description": "Renders a sprite inside a freely deformable quad with perspective-correct mapping. Corners are edited with Scene View handles. Works with standard sprite materials, 2D lights, secondary textures (normal/mask maps) and sorting layers.",
   "unity": "6000.0",
