@@ -17,6 +17,10 @@ namespace Larje.PerspectiveSprite
         private const string MeshName = "PerspectiveSpriteMesh";
 
         private static readonly int MainTexId = Shader.PropertyToID( "_MainTex" );
+        private static readonly int RendererColorId = Shader.PropertyToID( "_RendererColor" );
+        private static readonly int SpriteColorId = Shader.PropertyToID( "unity_SpriteColor" );
+        private static readonly int SpritePropsId = Shader.PropertyToID( "unity_SpriteProps" );
+        private static readonly Vector4 DefaultSpriteProps = new Vector4( 1f, 1f, 0f, 0f );
 
         [ Header( "Sprite" ) ]
         [ SerializeField ] private Sprite _sprite;
@@ -317,6 +321,7 @@ namespace Larje.PerspectiveSprite
 
             QuadHomography homography = QuadHomography.FromCorners( _bottomLeft, _bottomRight, _topRight, _topLeft, DegenerateEpsilon );
             Rect uvRect = GetSpriteUvRect();
+            Color vertexColor = GetVertexColor();
             int lineCount = _subdivisions + 1;
 
             for ( int y = 0; y < lineCount; y++ )
@@ -331,7 +336,7 @@ namespace Larje.PerspectiveSprite
 
                     _vertices.Add( homography.Map( new Vector2( u, v ) ) );
                     _uvs.Add( new Vector2( Mathf.Lerp( uvRect.xMin, uvRect.xMax, uvU ), Mathf.Lerp( uvRect.yMin, uvRect.yMax, uvV ) ) );
-                    _colors.Add( _color );
+                    _colors.Add( vertexColor );
                     _normals.Add( Vector3.back );
                     _tangents.Add( new Vector4( 1f, 0f, 0f, -1f ) );
                 }
@@ -372,6 +377,9 @@ namespace Larje.PerspectiveSprite
             }
 
             _meshRenderer.GetPropertyBlock( _propertyBlock );
+            _propertyBlock.SetColor( RendererColorId, Color.white );
+            _propertyBlock.SetVector( SpriteColorId, Vector4.one );
+            _propertyBlock.SetVector( SpritePropsId, DefaultSpriteProps );
 
             if ( _sprite != null )
             {
@@ -405,6 +413,16 @@ namespace Larje.PerspectiveSprite
                     _propertyBlock.SetTexture( secondary.name, secondary.texture );
                 }
             }
+        }
+
+        private Color GetVertexColor()
+        {
+            if ( QualitySettings.activeColorSpace == ColorSpace.Linear )
+            {
+                return _color.linear;
+            }
+
+            return _color;
         }
 
         private Rect GetSpriteUvRect()
